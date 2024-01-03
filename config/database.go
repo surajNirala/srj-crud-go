@@ -11,6 +11,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var DB *gorm.DB
+
 // const DNS = "root:@tcp(127.0.0.1:3306)/go_crud?charset=utf8mb4&parseTime=True&loc=Local"
 // DatabaseConfig represents the configuration for the database
 type DatabaseConfig struct {
@@ -40,14 +42,14 @@ func GetDatabaseConfig() DatabaseConfig {
 }
 
 // ConnectDB establishes a connection to the MySQL database using Gorm
-func ConnectDB(config DatabaseConfig) (*gorm.DB, error) {
+func InitDB(config DatabaseConfig) {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		config.User, config.Password, config.Host, config.Port, config.Name)
 
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	var err error
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return nil, err
+		panic("Failed to connect to database")
 	}
-
-	return db, nil
+	fmt.Println("Connected to database")
 }
