@@ -17,10 +17,10 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 }
 
 type APIResponse struct {
-	StatusCode int         //`json:"code"`
-	Status     string      //`json:"status"`
-	Message    string      //`json:"message"`
-	Data       interface{} `json:"Data,omitempty"`
+	StatusCode int         `json:"code"`
+	Status     string      `json:"status"`
+	Message    string      `json:"message"`
+	Data       interface{} `json:"data,omitempty"`
 }
 
 func ResponseError(w http.ResponseWriter, code int, message string, payload interface{}) {

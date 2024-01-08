@@ -9,14 +9,19 @@ import (
 	"github.com/surajNirala/srj-crud/config"
 	"github.com/surajNirala/srj-crud/models"
 	"github.com/surajNirala/srj-crud/responses"
+	"github.com/surajNirala/srj-crud/transforms"
 )
 
 func GetAllProduct(w http.ResponseWriter, r *http.Request) {
 	DB := config.DB
-	w.Header().Set("Content-Type", "application/json")
 	var products []models.Product
-	DB.Find(&products)
-	responses.ResponseSuccess(w, http.StatusOK, "Fetched Product List.", &products)
+	DB.Preload("User").Find(&products)
+
+	var transformProducts []transforms.ProductResponse
+	for _, product := range products {
+		transformProducts = append(transformProducts, transforms.TransformProduct(product))
+	}
+	responses.ResponseSuccess(w, http.StatusOK, "Fetched Product List.", transformProducts)
 	// json.NewEncoder(w).Encode(products)
 }
 
@@ -27,13 +32,14 @@ func GetProduct(w http.ResponseWriter, r *http.Request) {
 	var params = mux.Vars(r)
 	var productId = params["product_id"]
 	// result := DB.Select("name", "code", "price").First(&product, productId)
-	result := DB.First(&product, productId)
+	result := DB.Preload("User").First(&product, productId)
 	if result.Error != nil || result.RowsAffected == 0 {
 		responses.ResponseError(w, http.StatusNotFound, "Product not found", nil)
 		return
 	}
-	// fmt.Fprintf(w, "ID from URL: %s", productId)
-	json.NewEncoder(w).Encode(product)
+
+	transforms := transforms.TransformProduct(product)
+	responses.ResponseSuccess(w, http.StatusOK, "Feteched Product Detail.", transforms)
 }
 
 func DeleteProduct(w http.ResponseWriter, r *http.Request) {
