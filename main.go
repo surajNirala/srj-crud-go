@@ -16,6 +16,7 @@ import (
 )
 
 func main() {
+
 	config.LoadEnv()
 	dbConfig := config.GetDatabaseConfig()
 	config.InitDB(dbConfig)
@@ -32,6 +33,8 @@ func InitilizedMigration() {
 
 func routerInitialized() {
 	router := mux.NewRouter()
+	router.HandleFunc("/", handlers.Index).Methods("GET")
+
 	router.HandleFunc("/products", handlers.GetAllProduct).Methods("GET")
 	router.HandleFunc("/products", handlers.CreateProduct).Methods("POST")
 	router.HandleFunc("/products/{product_id}", handlers.GetProduct).Methods("GET")

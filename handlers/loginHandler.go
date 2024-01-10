@@ -13,6 +13,7 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/surajNirala/srj-crud/config"
+	"github.com/surajNirala/srj-crud/middleware"
 	"github.com/surajNirala/srj-crud/models"
 	"github.com/surajNirala/srj-crud/responses"
 )
@@ -94,6 +95,13 @@ func UserInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func ProfileImageUpdate(w http.ResponseWriter, r *http.Request) {
+	var user models.User
+	status, message := middleware.Islogin(w, r)
+	if status == 401 {
+		responses.ResponseError(w, status, message, nil)
+		return
+	}
+
 	// DB := config.DB
 	err := r.ParseMultipartForm(10 << 20) // Set a limit for the uploaded file size
 	if err != nil {
@@ -107,6 +115,17 @@ func ProfileImageUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
+	user_id := r.FormValue("user_id")
+	if user_id == "" {
+		responses.ResponseError(w, http.StatusBadRequest, "User ID not found", nil)
+		return
+	}
+	DB := config.DB
+	result := DB.Where("id = ?", user_id).First(&user)
+	if result.Error != nil || result.RowsAffected == 0 {
+		responses.ResponseError(w, http.StatusNotFound, "User not found", nil)
+		return
+	}
 	uploadDir := "uploaded/files/"
 	filename := generateUniqueFilename(handler.Filename)
 	fullPath := filepath.Join(uploadDir, filename)
@@ -116,10 +135,13 @@ func ProfileImageUpdate(w http.ResponseWriter, r *http.Request) {
 		responses.ResponseError(w, http.StatusBadRequest, "Error saving file", nil)
 		return
 	}
+	user.Image = &filename
+	DB.Save(&user)
 	// DB.Exec("INSERT INTO files (image) VALUES (?)", filename)
 	responses.ResponseSuccess(w, http.StatusOK, "File uploaded successfully!", nil)
 	return
 }
+
 func generateUniqueFilename(originalFilename string) string {
 	// Get the current timestamp
 	currentTime := time.Now()
